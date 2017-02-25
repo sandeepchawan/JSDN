@@ -29,16 +29,19 @@ def getNodeNeighbors(nodeId):
 		if link['endA']['node']['id'] != nodeId and link['endZ']['node']['id'] != nodeId:
 			continue
 		elif link['endA']['node']['id'] == nodeId:
-			if link['endZ']['bandwidth'] is None:
-				continue 
-			bw = int((link['endZ']['bandwidth'])/100) 
-			neighbors.append({'n_id': link['endZ']['node']['id'], 'bw': bw})
-		#endZ = nodeId
+			try:
+				bw = int((link['endZ']['bandwidth'])/100)
+				neighbors.append({'n_id': link['endZ']['node']['id'], 'bw': bw})
+ 
+			except:
+				pass
+
 		else: 
-			if link['endA']['bandwidth'] is None:
-				continue
-			bw = int((link['endA']['bandwidth'])/100)	
-			neighbors.append({'n_id': link['endA']['node']['id'], 'bw': bw})
+			try:
+				bw = int((link['endA']['bandwidth'])/100)	
+				neighbors.append({'n_id': link['endA']['node']['id'], 'bw': bw})
+			except:
+				pass
 	
 	#print neighbors	
 	for neighbor in neighbors:
