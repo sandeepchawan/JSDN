@@ -74,6 +74,8 @@ def failoverBackupLSP(failEvent):
 		ospf.findNewBackup(shortestPath['nhop'], downIP1, downIP2)
 		backupPaths = ospf.getBackupPaths()
 		backupPath = backupPaths[0]
+	else:
+		print "Nothing get Affected, no need to worry"
 	
 def checkSinglePathOnline(path):
 	isUp = False
@@ -97,11 +99,12 @@ def recalculateShortestPath():
 
 def recoverEventHandler(healEvent):
 	print "Response to Healed Event"
-	newSP = recalculateShortestPath()
+	newIPHops, newSP = recalculateShortestPath()
+	print "New calculated path: ", newSP['cost'], "Current Path: ", shortestPath['cost']
 	if newSP['cost'] < shortestPath['cost']:
-		enableLSP(getCurrentLSPList(), newSP['nhop'])
+		enableLSP(getCurrentLSPList(), newSP)
 		print "Recovered Link have lower cost, enabled new LSP"
 	else:
 		print "Path already optimized, no need to change"
 
-eventHandler(test_event)	
+#eventHandler(test_event)	

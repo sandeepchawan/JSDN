@@ -52,7 +52,7 @@ currentLSP = getCurrentLSP()
 def getCurrentLSPList():
  	lspList = []
 	for lsp in currentLSP.iterkeys():
-		lpsList.append({'name':lsp, 'nhop':currentLSP[lsp]})
+		lspList.append({'name':lsp, 'nhop':currentLSP[lsp]})
 	return lspList
 #print "Here current LSP: \n"
 #print currentLSP

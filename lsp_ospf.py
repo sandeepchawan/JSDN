@@ -173,10 +173,10 @@ def getBackupPaths():
 	
 	return backupPaths
 
-hops, curr = getShortestPath()
-pprint.pprint(routers)
-pprint.pprint(curr['nhop'])
-pprint.pprint(hops)
+#hops, curr = getShortestPath()
+#pprint.pprint(routers)
+#pprint.pprint(curr['nhop'])
+#pprint.pprint(hops)
 
 #print "Backup Shortest Path"
 #pprint.pprint(backupPaths)
