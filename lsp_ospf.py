@@ -98,7 +98,7 @@ def calculateBackupSP(curShortestPath):
 		#pprint.pprint(newSP)
 		backupPaths.append(newSP)
 		i+=1
-
+	backupPaths.sort()
 def findNewBackup(hops, downIP1, downIP2):
 	newGraph = topoGraph
 	i=0
@@ -118,14 +118,14 @@ def findNewBackup(hops, downIP1, downIP2):
                 #pprint.pprint(newSP)
                 backupPaths.append(newSP)
                 i+=1
-
+	backupPaths.sort()
 
 #alculateBackupSP()
 
 def getShortestPath():
 	print "Creating new Topology"
 	createTopologyGraph()
-	pprint.pprint(topoGraph)
+	#pprint.pprint(topoGraph)
 	curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraph)
 	#rint "Shortest Path:"
 	#print.pprint(curShortestPath)

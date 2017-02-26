@@ -6,7 +6,7 @@ import lsp_ospf as ospf
 import pprint
 from lsp_modify_ero import *
 
-test_event = {"status": "failed", "router_id": "10.210.10.118", "timestamp": "Thu:16:57:51", "interface_address": "10.210.17.1", "interface_name": "ge-1/0/2", "router_name": "los angeles"}
+#test_event = {"status": "failed", "router_id": "10.210.10.118", "timestamp": "Thu:16:57:51", "interface_address": "10.210.17.1", "interface_name": "ge-1/0/2", "router_name": "los angeles"}
 
 shortestIPHops, shortestPath = ospf.getShortestPath()
 backupPaths = ospf.getBackupPaths()
@@ -101,7 +101,7 @@ def recoverEventHandler(healEvent):
 	print "Response to Healed Event"
 	newIPHops, newSP = recalculateShortestPath()
 	print "New calculated path: ", newSP['cost'], "Current Path: ", shortestPath['cost']
-	if newSP['cost'] < shortestPath['cost']:
+	if newSP['cost'] <= shortestPath['cost']:
 		enableLSP(getCurrentLSPList(), newSP)
 		print "Recovered Link have lower cost, enabled new LSP"
 	else:
