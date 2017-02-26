@@ -23,7 +23,7 @@ for item in pubsub.listen():
     if isinstance(item['data'], basestring):
         d = json.loads(item['data'])
 	#eventHandler(d)
-        print "Inside link event client"
+        #print "Inside link event client"
 	pprint.pprint(d, width=1)
 	eventHandler(d)
 

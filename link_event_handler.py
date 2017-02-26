@@ -44,8 +44,8 @@ def enableLSP(lspList, path):
 		else:
 			modifyLSP(lsp['name'], nysfHop)
 	#set current value of shortest path = backup Path
-	shortestPath = backupPath
-
+	shortestPath = path
+	print "Current Shortest Routers Path: ", path
 	
 
 def failoverBackupLSP(failEvent):

@@ -18,7 +18,7 @@ def shortestPath(start, end,graph):
 		    heapq.heappush(queue, (cost + c, next, path))
 
 
-routers = [
+original_routers = [
            { 'name': 'Chicago', 'router_id': '10.210.10.124', 'adj': []},
            { 'name': 'SF', 'router_id': '10.210.10.100','adj': []},
            { 'name': 'Dallas', 'router_id': '10.210.10.106','adj': []},
@@ -28,7 +28,7 @@ routers = [
            { 'name': 'Houston', 'router_id': '10.210.10.114','adj': []},
            { 'name': 'Tampa', 'router_id': '10.210.10.115','adj': []}
            ]
-
+routers = original_routers
 
 def calculateLinkCost(adj):
 	#reference bw, default = 1bps link = 10^9
@@ -45,7 +45,8 @@ def calculateLinkCost(adj):
 	return int(cost)
 
 
-def getRouterAdj():
+def getRouterAdj(newRouter):
+	routers = newRouter
 	for router in routers:
 		#print "getRouterAdj", router['router_id']
 		neighbors = getNodeNeighbors(router['router_id'])
@@ -62,12 +63,22 @@ def getRouterAdj():
 topoGraph = {}
 backupPaths= [] 
 
-def createTopologyGraph():
-	getRouterAdj()
+def createTopologyGraph(excRouters = []):
+	if excRouters:
+		newRouters = routers
+		for excR in excRouters:
+			for router in newRouters:
+				if router['router_id'] == excR:
+					newRouters.remove(router)
+					break
+		getRouterAdj(newRouters)
+	else:
+		getRouterAdj(original_routers)
 	for router in routers:
 		adjs = {}
 		for adj in router['adj']:
-			adjs.update({adj['n_id']: adj['cost']})
+			if adj['n_id'] not in excRouters:
+				adjs.update({adj['n_id']: adj['cost']})
 			
 		topoGraph.update({router['router_id']: adjs})
 	return topoGraph	
@@ -102,7 +113,7 @@ def calculateBackupSP(curShortestPath):
 def findNewBackup(hops, downIP1, downIP2):
 	newGraph = topoGraph
 	i=0
-	pprint.pprint(hops)
+	#pprint.pprint(hops)
 	while i < (len(hops) - 1):
                 endA = hops[i]
                 endZ = hops[i+1]
@@ -122,9 +133,9 @@ def findNewBackup(hops, downIP1, downIP2):
 
 #alculateBackupSP()
 
-def getShortestPath():
+def getShortestPath(excRouters = []):
 	print "Creating new Topology"
-	createTopologyGraph()
+	createTopologyGraph(excRouters)
 	#pprint.pprint(topoGraph)
 	curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraph)
 	#rint "Shortest Path:"
