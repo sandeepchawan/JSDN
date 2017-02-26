@@ -45,12 +45,24 @@ def getRTT(r_id1, r_id2):
 	except:
 		print("Wrong latency code")
 		print code
+		print(latency)
 		code = r2 + ":" + r1 +':latency'
 		pass		
-	latency = r.lrange(code, 0,-1)[0]
-	json_latency = json.loads(latency)
 	
-	return json_latency['rtt-average(ms)']
+
+	try:
+		latency = r.lrange(code, 0,-1)[0]
+		#print latency
+	except:
+		pass
+	
+	#Why keep getting error here ? Sometime it work sometime it doesnt???
+	#Could be server side, sometime only return empty {}
+	result = 1
+	if latency:
+		json_latency = json.loads(latency)
+		result = json_latency['rtt-average(ms)']
+	return result
 
 
 #print getRTT('10.210.10.114', '10.210.10.115')

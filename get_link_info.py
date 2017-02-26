@@ -20,26 +20,34 @@ def getNodeNeighbors(nodeId):
 	r = requests.get('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/links/', headers=authHeader, verify=False)
 	links = r.json()	
 	
+	#pprint.pprint(links)
 	neighbors = [] 
 	
 	#pprint.pprint(links)
 	#print "waiting for info"
 		
 	for link in links:
+		if link['operationalStatus'] != "Up":
+			continue
+
 		if link['endA']['node']['id'] != nodeId and link['endZ']['node']['id'] != nodeId:
 			continue
 		elif link['endA']['node']['id'] == nodeId:
 			try:
+				peer_ip = link['endZ']['ipv4Address']['address']
+				local_ip = link['endA']['ipv4Address']['address']
 				bw = int((link['endZ']['bandwidth'])/100)
-				neighbors.append({'n_id': link['endZ']['node']['id'], 'bw': bw})
+				neighbors.append({'localIP':local_ip, 'peerIP': peer_ip, 'n_id': link['endZ']['node']['id'], 'bw': bw})
  
 			except:
 				pass
 
 		else: 
 			try:
+				peer_ip = link['endA']['ipv4Address']['address']
+				local_ip = link['endZ']['ipv4Address']['address']
 				bw = int((link['endA']['bandwidth'])/100)	
-				neighbors.append({'n_id': link['endA']['node']['id'], 'bw': bw})
+				neighbors.append({'localIP':local_ip, 'peerIP': peer_ip, 'n_id': link['endA']['node']['id'], 'bw': bw})
 			except:
 				pass
 	
@@ -50,12 +58,13 @@ def getNodeNeighbors(nodeId):
 		#print "nID", nodeId, "neighborId", neighbor['n_id']
 		if neighbor['n_id'] is not '':
 			rtt = getRTT(nodeId, neighbor['n_id'])
-			if int(neighbor['n_id'][-1]) != 0:
-				prior = int(neighbor['n_id'][-1])
+		
+		neighbor['reliability'] = 1	
 		neighbor['rtt'] = rtt
-		neighbor['r_prior'] = prior
+		#neighbor['r_prior'] = prior
 	return neighbors
 
+#pprint.pprint( getNodeNeighbors('10.210.10.112'))
 #for link in r.json():
 #    if link['name'] == 'L10.210.11.1_10.210.11.2':
 #        print 'A node:', link['endA']['node']['name']

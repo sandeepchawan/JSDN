@@ -35,7 +35,7 @@ def getPeer(ip):
 		if link['endA']['ipv4Address']['address'] == endA:
 			endZ = link['endZ']['ipv4Address']['address']
 			break;
-	print 'END Z = ', endZ
+	#print 'END Z = ', endZ
 	return endZ;
 
 

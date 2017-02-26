@@ -7,6 +7,7 @@ import requests
 requests.packages.urllib3.disable_warnings()
 import json
 from lsp_check_status import *
+import pprint
 
 url = "https://10.10.2.29:8443/oauth2/token"
 
@@ -42,101 +43,30 @@ def getCurrentLSP():
 			for nhop in lsp['liveProperties']['rro']:
 				nhopList.append(nhop['address'])
 			currentLSP[lsp['name']] =  nhopList
-	print "Current LSP"
-	print currentLSP	
+	#print "Current LSP"
+	#print currentLSP	
 	return currentLSP
 
 currentLSP = getCurrentLSP()
 
+def getCurrentLSPList():
+ 	lspList = []
+	for lsp in currentLSP.iterkeys():
+		lpsList.append({'name':lsp, 'nhop':currentLSP[lsp]})
+	return lspList
 #print "Here current LSP: \n"
 #print currentLSP
-
-
-def calculateBackupLSP():
-	#backupLSP = currentLSP
-	print "**** THIS IS BACKUP LINK ****"
-	print backupLSP
-
-def checkAltLSPStatus(name):
-	allUp = True
-
-        nhop_list = []
-	#print currentLSP.get(name)
-	#print backupLSP.get(name)
-        for nhop in backupLSP.get(name):
-        	#print "NEXT HOP" , nhop
-		nhop_list.append(nhop)
-
-        if not isAllLinkUp(nhop_list):
-                allUp = False
-
-        return allUp
-
-def upOldBestLSP(name):
-	print "Getting old best LSP up"
-	
-	nhop_list = [] 
-	allUp = True
-	
-	for nhop in bestOldLSP.get(name):
-		nhop_list.append(nhop)
-
-	if not isAllLinkUp(nhop_list):
-		allUp = False
-	print "Checked. All Old Best LSP Link is Up ? - " , allUp
-
-	if allUp:
-		for lsp in lsp_list:
-                	if lsp['name'] == name:
-                        	break
-        	ero = []
-
-        	for ip in bestOldLSP[name]:
-                	ero.append({'topoObjectType': 'ipv4', 'address':ip})
-
-        	new_lsp = {}
-        	for key in ('from', 'to', 'name', 'lspIndex', 'pathType'):
-                	new_lsp[key] = lsp[key]
-
-        	new_lsp['plannedProperties'] = {
-                	'ero': ero
-        	}
-        	response = requests.put('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/te-lsps/' + str(new_lsp['lspIndex']), json = new_lsp, headers=authHeader, verify=False)		
-		
-			
-
-def upBackupLSP(name):
-	
-	print "Is this" , name, " Backup Link Up?", checkAltLSPStatus(name)
-	for lsp in lsp_list:
-		if lsp['name'] == name:
-			break
-	ero = []
-	
-	for ip in backupLSP[name]:
-		ero.append({'topoObjectType': 'ipv4', 'address':ip})
-
-	new_lsp = {}
-	for key in ('from', 'to', 'name', 'lspIndex', 'pathType'):
-		new_lsp[key] = lsp[key]
-	
-	new_lsp['plannedProperties'] = {
-		'ero': ero
-	}
-	response = requests.put('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/te-lsps/' + str(new_lsp['lspIndex']), json = new_lsp, headers=authHeader, verify=False)
-	
-	#print response.text
 
 
 
 
 def getListAffectLSP(downIP1, downIP2):
 	affectLSP  = []
-	print currentLSP
+	#print currentLSP
 	
 	for lsp in currentLSP.iterkeys():
 		#for hopList in currentLSP.itervalues():
-		print "LSP here", lsp
+		#print "LSP here", lsp
 		hopList = currentLSP[lsp]
 		if(downIP1 in hopList) or (downIP2 in hopList):
 			affectLSP.append({'name':lsp, 'nhop': hopList})	
@@ -145,7 +75,9 @@ def getListAffectLSP(downIP1, downIP2):
 			#	
 			#	print "Find an affect LSP", lsp, hopList
 
-	print "Affect LSP #: ", affectLSP
+	#print "Affect LSP #: ",
+	#for lsp in affectLSP:
+	#	pprint.pprint(lsp['name'])
 	return affectLSP
 
 def getNextHopList(lspName):

@@ -35,11 +35,12 @@ def calculateLinkCost(adj):
 	ref_bw = 1000000000
 	bw = adj['bw']
 	rtt = adj['rtt']
-	r_prior = adj['r_prior'] 
+	reli = adj['reliability']
+	#r_prior = adj['r_prior'] 
 	
 	#Link cost: ((RTT/20  * 256)    +   reference-bw / reservered-min-bw ) * router-priority 
 	#priority 1 -> 15, 1 = highest priority = lowest cost
-	cost =  ((rtt/20 * 256) + ((ref_bw)/bw)) * r_prior
+	cost =  ((rtt/20 * 256) + ((ref_bw)/bw)) * reli
 	
 	return int(cost)
 
@@ -52,32 +53,38 @@ def getRouterAdj():
 			neighbor['cost'] = calculateLinkCost(neighbor)
 
 		router['adj'] = neighbors
+	return routers
 			
 
-getRouterAdj()
+#getRouterAdj()
 #pprint.pprint(routers)
 
 topoGraph = {}
 backupPaths= [] 
 
 def createTopologyGraph():
+	getRouterAdj()
 	for router in routers:
-		cost = {}
+		adjs = {}
 		for adj in router['adj']:
-			cost.update({adj['n_id']: adj['cost']})
+			adjs.update({adj['n_id']: adj['cost']})
 			
-		topoGraph.update({router['router_id']: cost})
-			
-createTopologyGraph()
+		topoGraph.update({router['router_id']: adjs})
+	return topoGraph	
+	
+#reateTopologyGraph()
 #print "Topology Graph"
 #pprint.pprint(topoGraph)
 	
-curShortestPath = shortestPath('10.210.10.118','10.210.10.100', topoGraph)
+#curShortestPath = {}
+curShortestIPHops = [] 
+#shortestPath('10.210.10.118','10.210.10.100', topoGraph)
 #print "Best Shortest Path"
 #print curShortestPath
-#print calculateOSPF(topoGraph, '10.210.10.118', '10.210.10.100');
 
-def calculateBackupSP():
+
+def calculateBackupSP(curShortestPath):
+	#print curShortestPath
 	hops = curShortestPath['nhop']
 	i = 0
 	
@@ -92,15 +99,84 @@ def calculateBackupSP():
 		backupPaths.append(newSP)
 		i+=1
 
-calculateBackupSP()
+def findNewBackup(hops, downIP1, downIP2):
+	newGraph = topoGraph
+	i=0
+	pprint.pprint(hops)
+	while i < (len(hops) - 1):
+                endA = hops[i]
+                endZ = hops[i+1]
+                newGraph = topoGraph
+                newGraph[endA].pop(endZ, None)
+		try:
+			newGraph[endA].pop(downIP1, None)
+			newGraph[endA].pop(downIP2, None)
+		except:
+			pass
+                #pprint.pprint(newGraph)
+                newSP = shortestPath(hops[0], hops[-1], newGraph)
+                #pprint.pprint(newSP)
+                backupPaths.append(newSP)
+                i+=1
+
+
+#alculateBackupSP()
 
 def getShortestPath():
-	return curShortestPath
+	print "Creating new Topology"
+	createTopologyGraph()
+	pprint.pprint(topoGraph)
+	curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraph)
+	#rint "Shortest Path:"
+	#print.pprint(curShortestPath)
+	
+	print "Calculating new Backup Paths\n"
+	calculateBackupSP(curShortestPath)
+ 
+	
+	ipHops = getHopsIP(curShortestPath['nhop'])
+	curShortestIPHops = ipHops
+	
+	return ipHops, curShortestPath
+
+def getHopsIP(rHops):
+	startIP = rHops[0]
+	#endIP = routerHops[-1]
+	hopsIP = []
+	
+	#print "Router Hops: " , rHops
+	i = 0
+	while i < (len(rHops) -1):
+		curr = rHops[i]
+		nextR = rHops[i+1] 
+	
+		for router in routers:
+			if curr == router['router_id'] and curr == startIP:
+				for adj in router['adj']:
+					if adj['n_id'] == nextR:
+						hopsIP.append(adj['localIP'])
+						hopsIP.append(adj['peerIP'])
+						break
+				break
+			elif curr == router['router_id']:
+					for adj in router['adj']:
+						if adj['n_id'] == nextR:
+							hopsIP.append(adj['peerIP'])
+							break
+					break
+		i+=1
+	
+	return hopsIP
 
 def getBackupPaths():
+	#print "Calculating new Shortest Path"
+	
 	return backupPaths
 
-
+hops, curr = getShortestPath()
+pprint.pprint(routers)
+pprint.pprint(curr['nhop'])
+pprint.pprint(hops)
 
 #print "Backup Shortest Path"
 #pprint.pprint(backupPaths)

@@ -4,16 +4,19 @@ from lsp_check_status import *
 import topology
 import lsp_ospf as ospf 
 import pprint
+from lsp_modify_ero import *
 
 test_event = {"status": "failed", "router_id": "10.210.10.118", "timestamp": "Thu:16:57:51", "interface_address": "10.210.17.1", "interface_name": "ge-1/0/2", "router_name": "los angeles"}
 
-shortestPath = ospf.getShortestPath()
+shortestIPHops, shortestPath = ospf.getShortestPath()
 backupPaths = ospf.getBackupPaths()
+backupPath = backupPaths[0]
+
 print "Shortest Path"
 pprint.pprint(shortestPath)
 
 print "Backup Path"
-pprint.pprint(backupPaths)
+pprint.pprint(backupPath)
 
 def eventHandler(event):
         print "Handling new event\n"
@@ -23,11 +26,27 @@ def eventHandler(event):
                 failoverBackupLSP(event);
         if(event['status'] == 'healed'):
                 print "Link Recovered detected"
-                bringBackOldLSP(event);
+               	recoverEventHandler(event);
 
-def enableBackupLSP(name):
-	print "Enabling backup LSP"
-	upBackupLSP(name)
+def enableLSP(lspList, path):
+	print "Enabling LSPs"
+	nhops = ospf.getHopsIP(path['nhop'])
+	pathR = path['nhop'][::-1]
+	nysfHop = ospf.getHopsIP(pathR)
+
+	#print "Next Hops to enable: "
+	#pprint.pprint(nhops)
+	#pprint.pprint(nhopsR)
+	#print "####"
+	for lsp in lspList:
+		if 'SF_NY' in lsp['name']:
+			modifyLSP(lsp['name'], nhops)
+		else:
+			modifyLSP(lsp['name'], nysfHop)
+	#set current value of shortest path = backup Path
+	shortestPath = backupPath
+
+	
 
 def failoverBackupLSP(failEvent):
         print "Response to event handler"
@@ -36,12 +55,30 @@ def failoverBackupLSP(failEvent):
 	downIP2 = topology.getPeer(downIP1)
 	affect_list = getListAffectLSP(downIP1, downIP2)
 	
+	#global backupPaths
+	global backupPath
+
 	if affect_list:
-		print "Checking Backup"
-		checkBackupOnline(backupPaths)
-	#checkBackupAvailability(backupPaths)
-	#bringUpBackup()
-	#recalculateShortestPath()
+		#print backupPath
+		print "Checking Backup, getting best Backup Path Online:"
+		backupIsUp = checkSinglePathOnline(backupPath)
+		#If first backup is not up, check whole list
+		if backupIsUp == False:
+			backupPath = checkBackupOnline(backupPaths)
+		
+		#pprint.pprint(backupPath)
+		#Enable backup list
+		enableLSP(affect_list, backupPath)
+		
+		#pprint.pprint(shortestPath)
+		ospf.findNewBackup(shortestPath['nhop'], downIP1, downIP2)
+		backupPaths = ospf.getBackupPaths()
+		backupPath = backupPaths[0]
+	
+def checkSinglePathOnline(path):
+	isUp = False
+	isUp = isAllLinkUp(path['nhop'])
+	return isUp
 	
 def checkBackupOnline(paths):
 	isUp = False
@@ -50,28 +87,21 @@ def checkBackupOnline(paths):
 		if isUp:
 			break
 	return path
-		
+	
+	
 def recalculateShortestPath():
-	print "Recalculate Shortest Path"
-	
+	print "Recalculate Backup Shortest Path"
+	return ospf.getShortestPath()
 
-def saveCurrentLSP(event):
-        print "Saving current LSP"
 
-	downIP1 = event['interface_address']
-	downIP2 = topology.getPeer(downIP1)
-	print downIP1, downIP2
-	
-	affect_list = getListAffectLSP(downIP1,downIP2)
- 	#print "Is All Backup Link Up?", checkAltLSPStatus(affect_list)
-	
-	for affectlsp in affect_list:
-		enableBackupLSP(affectlsp['name'])
-		print "Affected LSP: ", affectlsp
-	#print "Is All Link Up?", checkAltLSPStatus(affect_list)
-	
-	
-def bringBackOldLSP(healEvent):
-	print "Heal Event response"
+
+def recoverEventHandler(healEvent):
+	print "Response to Healed Event"
+	newSP = recalculateShortestPath()
+	if newSP['cost'] < shortestPath['cost']:
+		enableLSP(getCurrentLSPList(), newSP['nhop'])
+		print "Recovered Link have lower cost, enabled new LSP"
+	else:
+		print "Path already optimized, no need to change"
 
 eventHandler(test_event)	
