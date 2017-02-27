@@ -56,6 +56,9 @@ def eventHandler(event):
 
 def enableLSP(lspList, path):
 	print "Enabling LSPs"
+	#for lsp in lspList:
+	#	print "LSP List: ", lsp['name'], "Path: ", path
+
 	nhops = ospf.getHopsIP(path['nhop'])
 	pathR = path['nhop'][::-1]
 	nysfHop = ospf.getHopsIP(pathR)
@@ -66,10 +69,10 @@ def enableLSP(lspList, path):
 	#print "####"
 	for lsp in lspList:
 		if 'SF_NY' in lsp['name']:
-			#print "Modifying", lsp['name'], nhops
+			print "Modifying", lsp['name'], nhops
 			modifyLSP(lsp['name'], nhops)
-		else:
-			#print "Modifying", lsp['name'], nysfHop
+		elif 'NY_SF' in lsp['name']:
+			print "Modifying", lsp['name'], nysfHop
 			modifyLSP(lsp['name'], nysfHop)
 	#set current value of shortest path = backup Path
 	#shortestPath = path
@@ -132,11 +135,9 @@ blockR = ''
 	
 def recalculateShortestPath():
 	global blockR
-	excR = []
 
-	if blockR:
-		excR.append(blockR)
-		return ospf.getShortestPath(excR)
+	if blockR != '':
+		return ospf.getShortestPath(blockR)
 
 	print "Recalculate Backup Shortest Path"
 	return ospf.getShortestPath()
@@ -167,10 +168,11 @@ def recoverEventHandler(healEvent):
                         backupPath1 = backupPaths.pop(0)
 		
 		lspList = getCurrentLSPList()
+		pprint.pprint(lspList)
+		highPrior = []
 		for lsp in lspList:
-			highPrior = []
 			if "1" in lsp['name'] or "2" in lsp['name']:
-				print "High Prior LSP: ", lsp
+				#print "High Prior LSP: ", lsp
 				highPrior.append(lsp)
 				lspList.remove(lsp)
 
@@ -184,9 +186,45 @@ def recoverEventHandler(healEvent):
 def refreshPaths():
 	recoverEventHandler({})
 
+
 def setBlockRouter(r_id):
 	global blockR
 	blockR = r_id
 	
-	recoverEventHandler({})
+	newIPHops, newSP, newIPHops2, newSP2 = recalculateShortestPath()
+	#CHANGE EVERYTHING
+	if newIPHops and newSP and newIPHops2 and newSP2:	
+		shortestPath = newSP
+        	shortestPath2 = newSP2
+
+                backupPaths = ospf.getBackupPaths()
+                if backupPaths[0]['cost'] < backupPaths[1]['cost']:
+                        backupPath1 = backupPaths.pop(0)
+                        backupPath2 = backupPaths.pop(0)
+                else:
+                        backupPath2 = backupPaths.pop(0)
+                        backupPath1 = backupPaths.pop(0)
+
+                lspList = getCurrentLSPList()
+		highPrior = []
+                for lsp in lspList:
+                        if "1" in lsp['name'] or "2" in lsp['name']:
+                                #print "High Prior LSP: ", lsp
+                                highPrior.append(lsp)
+                                lspList.remove(lsp)
+		pprint.pprint(shortestPath)
+                enableLSP(highPrior, shortestPath)
+                enableLSP(lspList, shortestPath2)
+	else:
+		print "Error in setting block Router"
+		return
+	print "Recalculated shortest Path and backup with blocked Routers"
+	print "All LSP Enabled with new Hops"
+
+	#recoverEventHandler({})
+
+refreshPaths()
+#refreshPaths()
+
+#setBlockRouter('10.210.10.124')
 #eventHandler(test_event)	

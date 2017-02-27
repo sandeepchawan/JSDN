@@ -24,14 +24,52 @@ def shortestPath(start, end,graph):
 
 
 original_routers = [
-           { 'name': 'Chicago', 'router_id': '10.210.10.124', 'adj': []},
-           { 'name': 'SF', 'router_id': '10.210.10.100','adj': []},
-           { 'name': 'Dallas', 'router_id': '10.210.10.106','adj': []},
-           { 'name': 'Miami', 'router_id': '10.210.10.112','adj': []},
-           { 'name': 'NY', 'router_id': '10.210.10.118','adj': []},
-           { 'name': 'LA', 'router_id': '10.210.10.113','adj': []},
-           { 'name': 'Houston', 'router_id': '10.210.10.114','adj': []},
-           { 'name': 'Tampa', 'router_id': '10.210.10.115','adj': []}
+           { 'name': 'Chicago', 'router_id': '10.210.10.124', 'adj': [], 'interfaces': [
+                                                                            { 'name': 'ge-1/0/1', 'address': '10.210.16.2' }, 
+                                                                            { 'name': 'ge-1/0/2', 'address': '10.210.13.2' },
+                                                                            { 'name': 'ge-1/0/3', 'address': '10.210.14.2' }, 
+                                                                            { 'name': 'ge-1/0/4', 'address': '10.210.17.2' }
+                                                                            ]},
+           { 'name': 'SF', 'router_id': '10.210.10.100','adj': [], 'interfaces': [
+                                                                            { 'name': 'ge-1/0/0', 'address': '10.210.18.1' },
+                                                                            { 'name': 'ge-1/0/1', 'address': '10.210.15.1' },
+                                                                            { 'name': 'ge-1/0/3', 'address': '10.210.16.1' }
+                                                                            ]},
+           { 'name': 'Dallas', 'router_id': '10.210.10.106','adj': [], 'interfaces': [
+                                                                             { 'name': 'ge-1/0/0', 'address': '10.210.15.2' }, 
+                                                                             { 'name': 'ge-1/0/1', 'address': '10.210.19.1' }, 
+                                                                             { 'name': 'ge-1/0/2', 'address': '10.210.21.1' }, 
+                                                                             { 'name': 'ge-1/0/3', 'address': '10.210.11.1' }, 
+                                                                             { 'name': 'ge-1/0/4', 'address': '10.210.13.1' }
+                                                                             ]},
+           { 'name': 'Miami', 'router_id': '10.210.10.112','adj': [], 'interfaces': [
+                                                                            { 'name': 'ge-1/0/0', 'address': '10.210.22.1' }, 
+                                                                            { 'name': 'ge-1/0/1', 'address': '10.210.24.1' }, 
+                                                                            { 'name': 'ge-1/0/2', 'address': '10.210.12.1' }, 
+                                                                            { 'name': 'ge-1/0/3', 'address': '10.210.11.2' }, 
+                                                                            { 'name': 'ge-1/0/4', 'address': '10.210.14.1' }
+                                                                            ]},
+           { 'name': 'NY', 'router_id': '10.210.10.118','adj': [], 'interfaces': [
+                                                                               { 'name': 'ge-1/0/3', 'address': '10.210.12.2' }, 
+                                                                               { 'name': 'ge-1/0/5', 'address': '10.210.17.1' }, 
+                                                                               { 'name': 'ge-1/0/7', 'address': '10.210.26.1' }
+                                                                               ]},
+           { 'name': 'LA', 'router_id': '10.210.10.113','adj': [], 'interfaces': [
+                                                                                  { 'name': 'ge-1/0/0', 'address': '10.210.18.2' },
+                                                                                  { 'name': 'ge-1/0/1', 'address': '10.210.19.2' },
+                                                                                  { 'name': 'ge-1/0/2', 'address': '10.210.20.1' }
+                                                                                  ]},
+           { 'name': 'Houston', 'router_id': '10.210.10.114','adj': [], 'interfaces': [
+                                                                              { 'name': 'ge-1/0/0', 'address': '10.210.20.2' },
+                                                                              { 'name': 'ge-1/0/1', 'address': '10.210.21.2' },
+                                                                              { 'name': 'ge-1/0/2', 'address': '10.210.22.2' },
+                                                                              { 'name': 'ge-1/0/3', 'address': '10.210.25.1' }
+                                                                              ]},
+           { 'name': 'Tampa', 'router_id': '10.210.10.115','adj': [], 'interfaces': [
+                                                                            { 'name': 'ge-1/0/0', 'address': '10.210.25.2' }, 
+                                                                            { 'name': 'ge-1/0/1', 'address': '10.210.24.2' }, 
+                                                                            { 'name': 'ge-1/0/2', 'address': '10.210.26.2' }
+                                                                            ]}
            ]
 
 routers = copy.deepcopy(original_routers)
@@ -83,6 +121,7 @@ def createTopologyGraph(excRouters = [], ID=0):
 	#print "FRESH TOPO?"
 	#pprint.pprint(routers)
 	if excRouters:
+		print "EXC those Router: ", excRouters
 		newRouters = routers
 		for excR in excRouters:
 			for router in newRouters:
@@ -227,15 +266,17 @@ def sortBackupPaths():
 
 
 
-def getShortestPath(noRouter = []):
+def getShortestPath(noRouter = ''):
 	print "Refreshing Current Topology.."
 	global topoGraphs
 	topoGraphs = [{}, {}]
 	
 	excRouters = []
-	if noRouter:
+	if noRouter != '':
+		#print "****** Exclude Router: ", noRouter
 		excRouters.append(noRouter)
-	
+	else:
+		print "** No block Router **"
 	createTopologyGraph(excRouters, 0)
 	curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraphs[0])
 
@@ -324,7 +365,9 @@ def getHopsIP(rHops):
 			elif curr == router['router_id']:
 					for adj in router['adj']:
 						if adj['n_id'] == nextR:
-							hopsIP.append(adj['peerIP'])
+							for interface in router['interfaces']:
+								if adj['localIP'] == interface['address']:
+									hopsIP.append(adj['peerIP'])
 							break
 					break
 		i+=1
