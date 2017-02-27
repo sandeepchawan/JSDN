@@ -20,22 +20,18 @@ r = requests.get('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/t
 
 p = json.dumps(r.json())
 lsp_list = json.loads(p)
-# Find target LSP to use lspIndex
-
-#for lsp in lsp_list:
-#    if lsp['name'] == 'GROUP_NINE_NY_SF_LSP4':
-#        break   
-#print json.dumps(lsp, indent=4, separators=(',', ': '))
-#print lsp['liveProperties']['rro']
-#count = 1
-#for nhop in lsp['liveProperties']['rro']:
-#    print 'hop' + str(count) + ':', nhop['address']
-#    count = count + 1
 
 
 backupLSP = {}
 
+def refresh():
+	r = requests.get('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/te-lsps/', headers=authHeader, verify=False)
+
+	p = json.dumps(r.json())
+	lsp_list = json.loads(p)	
+
 def getCurrentLSP():
+	refresh()
 	currentLSP = {}
 	for lsp in lsp_list:
 		if "FIVE" in lsp['name']:
@@ -63,17 +59,15 @@ def getCurrentLSPList():
 def getListAffectLSP(downIP1, downIP2):
 	affectLSP  = []
 	#print currentLSP
-	
+	#refresh
+	#getCurrentLSP()
+
 	for lsp in currentLSP.iterkeys():
 		#for hopList in currentLSP.itervalues():
 		#print "LSP here", lsp
 		hopList = currentLSP[lsp]
 		if(downIP1 in hopList) or (downIP2 in hopList):
 			affectLSP.append({'name':lsp, 'nhop': hopList})	
-			#if (downIP1 in hopList) or (downIP2 in hopList):
-			#	affectLSP.append({'name':lsp, 'nhop': hopList})
-			#	
-			#	print "Find an affect LSP", lsp, hopList
 
 	#print "Affect LSP #: ",
 	#for lsp in affectLSP:
