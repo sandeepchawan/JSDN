@@ -43,11 +43,15 @@ def modifyLSP(name, hops):
 	#pprint.pprint(new_lsp)
 	
         response = requests.put('https://10.10.2.29:8443/NorthStar/API/v2/tenant/1/topology/1/te-lsps/' + str(new_lsp['lspIndex']), json = new_lsp, headers=authHeader, verify=False)
-        
-	#if "400" in response:
-	#	print "***** BAD REQUEST *******"
-	#	pprint.pprint(new_lsp)
-	pprint.pprint(response)
+       
+	print str(response) 
+	if "400" in str(response):
+		print "***** BAD REQUEST *******"
+		pprint.pprint(new_lsp)
+	if "202" in str(response):
+		print "ACCEPTED 202", response
+		pprint.pprint(new_lsp)
+	#pprint.pprint(response)
 	#pprint.pprint(new_lsp) 
 	#pprint.pprint(response)
 	#print "Sent new LSP"

@@ -151,7 +151,10 @@ def recoverEventHandler(healEvent):
 	except:
 		print "Something Happen, Try again"
 		return
-	
+	if not newIPHops and not newSP and not newIPHops2 and not newSP2:
+		print "Error getting new shortest path"
+		refreshPaths()
+		return	
 	global shortestPath
 	print "New calculated path: ", newSP['cost'], "Current Path: ", shortestPath['cost']
 
@@ -175,9 +178,9 @@ def recoverEventHandler(healEvent):
 				#print "High Prior LSP: ", lsp
 				highPrior.append(lsp)
 				lspList.remove(lsp)
-
-		enableLSP(highPrior, shortestPath)
-		enableLSP(lspList, shortestPath2)
+		if newSP and newSP2:
+			enableLSP(highPrior, newSP)
+			enableLSP(lspList, newSP2)
 		
 		print "Recovered Link have lower cost, enabled new LSP"
 	else:
