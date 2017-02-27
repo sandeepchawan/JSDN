@@ -52,8 +52,10 @@ def enableLSP(lspList, path):
 	#print "####"
 	for lsp in lspList:
 		if 'SF_NY' in lsp['name']:
+			print "Modifying", lsp['name'], nhops
 			modifyLSP(lsp['name'], nhops)
 		else:
+			print "Modifying", lsp['name'], nysfHop
 			modifyLSP(lsp['name'], nysfHop)
 	#set current value of shortest path = backup Path
 	#shortestPath = path
@@ -134,7 +136,12 @@ def recalculateShortestPath():
 
 def recoverEventHandler(healEvent):
 	print "Response to Healed Event"
-	newIPHops, newSP, newIPHops2, newSP2 = recalculateShortestPath()
+	try:
+		newIPHops, newSP, newIPHops2, newSP2 = recalculateShortestPath()
+	except:
+		print "Something Happen, Try again"
+		return
+	
 	global shortestPath
 	print "New calculated path: ", newSP['cost'], "Current Path: ", shortestPath['cost']
 
@@ -154,6 +161,7 @@ def recoverEventHandler(healEvent):
 		for lsp in lspList:
 			highPrior = []
 			if "1" in lsp['name'] or "2" in lsp['name']:
+				print "High Prior LSP: ", lsp
 				highPrior.append(lsp)
 				lspList.remove(lsp)
 

@@ -36,21 +36,31 @@ def getNodeNeighbors(nodeId):
 			try:
 				peer_ip = link['endZ']['ipv4Address']['address']
 				local_ip = link['endA']['ipv4Address']['address']
+				#bw = 1000000000
 				bw = int((link['endZ']['bandwidth'])/100)
 				neighbors.append({'localIP':local_ip, 'peerIP': peer_ip, 'n_id': link['endZ']['node']['id'], 'bw': bw})
  
-			except:
-				pass
+			except Exception as e:
+				print "Error when getting Node Neighbors"
+				print str(e)
+				return
 
 		else: 
 			try:
 				peer_ip = link['endA']['ipv4Address']['address']
 				local_ip = link['endZ']['ipv4Address']['address']
+				#bw = 1000000000
 				bw = int((link['endA']['bandwidth'])/100)	
 				neighbors.append({'localIP':local_ip, 'peerIP': peer_ip, 'n_id': link['endA']['node']['id'], 'bw': bw})
-			except:
-				pass
+			except Exception as e:
+				print "Error when getting node neighbors"
+				print str(e)
+				return
 	
+	#if neighbors:
+	#	print "FOUND NEIGHBORS of " ,nodeId
+	#	pprint.pprint( neighbors)
+		
 	#print neighbors	
 	for neighbor in neighbors:
 		rtt = 0

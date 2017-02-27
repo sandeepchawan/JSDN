@@ -8,6 +8,9 @@ import copy
 import random
 
 def shortestPath(start, end,graph):
+	#pprint.pprint(graph)
+	#print "start:", start, "end: ", end
+
 	queue,seen = [(0, start, [])], set()
 	while True:
 	    (cost, v, path) = heapq.heappop(queue)
@@ -48,17 +51,22 @@ def calculateLinkCost(adj):
 	return int(cost)
 
 
-def getRouterAdj(newRouter):
-	global routers
-	routers = copy.deepcopy(newRouter)
-	for router in routers:
+def getRouterAdj(newRouters):
+	for router in newRouters:
 		#print "getRouterAdj", router['router_id']
 		neighbors = getNodeNeighbors(router['router_id'])
+		#if len(neighbors) == len(router['adj']):
+			#print "**** PROBLEM WITH GETTING NEIGHBORS"
+			#pprint.pprint(neighbors)
 		for neighbor in neighbors:
 			neighbor['cost'] = calculateLinkCost(neighbor)
 
 		router['adj'] = neighbors
-	return routers
+		#print "CHECKING NEIGHBORS ADJ"
+		#pprint.pprint(router)
+		#pprint.pprint(router['adj'])
+		#pprint.pprint(neighbors)
+	
 			
 
 #getRouterAdj()
@@ -69,7 +77,11 @@ backupPaths= []
 
 def createTopologyGraph(excRouters = [], ID=0):
 	global routers
+	global topoGraphs
+
 	routers = copy.deepcopy(original_routers)
+	#print "FRESH TOPO?"
+	#pprint.pprint(routers)
 	if excRouters:
 		newRouters = routers
 		for excR in excRouters:
@@ -79,22 +91,40 @@ def createTopologyGraph(excRouters = [], ID=0):
 					break
 		getRouterAdj(newRouters)
 	else:
-		getRouterAdj(original_routers)
+		getRouterAdj(routers)
+
+	#print "Inside creating topo"
+	#pprint.pprint(routers)	
+	
+	#for router in routers:
+	#	if not router['adj']:
+	#		print "MISSING ROUTER ADJ"
+	#		return
 	
 	topoGraph = {}
+	#print "*************** EXC ROUTER *************" , excRouters
 	for router in routers:
 		adjs = {}
 		for adj in router['adj']:
-			if adj['n_id'] not in excRouters:
-				adjs.update({adj['n_id']: adj['cost']})
-			
+			if adj['n_id'] in excRouters:
+				#adjs.update({adj['n_id']: adj['cost']})
+				continue
+			adjs.update({adj['n_id']:adj['cost']})
+			#print "********* FOUND EXC ROUTER ********"
 		
 		topoGraph.update({router['router_id']: adjs})
+	
+	if topoGraph:
+		topoGraphs[ID] = topoGraph
 	try:	
-		if topoGraph:
-			topoGraphs[ID] = topoGraph
+		if not topoGraphs[ID]:
+			print "MISSING TOPO GRAPHS"
+			return
 	except:
-		"Error setting TopoGraph"
+		return
+	#print "TOPO after running ()"
+	#pprint.pprint(topoGraphs[0])
+	#pprint.pprint(topoGraphs[1])
 	#pprint.pprint(topoGraphs[ID])
 	return topoGraphs[ID]	
 	
@@ -197,26 +227,29 @@ def sortBackupPaths():
 
 
 
-def getShortestPath(excRouters = []):
+def getShortestPath(noRouter = []):
 	print "Refreshing Current Topology.."
+	global topoGraphs
+	topoGraphs = [{}, {}]
+	
+	excRouters = []
+	if noRouter:
+		excRouters.append(noRouter)
+	
 	createTopologyGraph(excRouters, 0)
-	pprint.pprint(topoGraphs)
-	try:
-		curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraphs[0])
-	except:
-		return
+	curShortestPath = shortestPath('10.210.10.100','10.210.10.118', topoGraphs[0])
 
 	bestHops = curShortestPath['nhop']
 
 	excR = bestHops[(len(bestHops)-1)/2]
+
 	if excR not in excRouters:
 		excRouters.append(excR)
-	#print excRouters
+		#print excRouters
 	createTopologyGraph(excRouters,1)
-	try:
-		shortestPath2 = shortestPath('10.210.10.100','10.210.10.118', topoGraphs[1])
-	except:
-		return
+	
+	shortestPath2 = shortestPath('10.210.10.100','10.210.10.118', topoGraphs[1])
+
 	print "\n*** Shortest Path found:"
 	pprint.pprint(curShortestPath)
 	pprint.pprint(shortestPath2)
@@ -237,6 +270,7 @@ def getShortestPath(excRouters = []):
 				calculateBackupSP(path, topoGraphs[i])
 		except:
 			pass
+
 	#Final Swap
 	for path in backupPaths:
 		if path['cost'] < curShortestPath['cost']:
@@ -263,8 +297,9 @@ def getShortestPath(excRouters = []):
 	ipHops1 = getHopsIP(curShortestPath['nhop'])
         ipHops2 = getHopsIP(shortestPath2['nhop'])
 	
-	print "Final backup path:" 
-	pprint.pprint(backupPaths)
+	#print "Finalized Backup Paths:" 
+	#pprint.pprint(backupPaths)
+
 	return ipHops1, curShortestPath, ipHops2, shortestPath2
 
 def getHopsIP(rHops):
