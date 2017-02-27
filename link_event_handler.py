@@ -52,14 +52,14 @@ def enableLSP(lspList, path):
 	#print "####"
 	for lsp in lspList:
 		if 'SF_NY' in lsp['name']:
-			print "Modifying", lsp['name'], nhops
+			#print "Modifying", lsp['name'], nhops
 			modifyLSP(lsp['name'], nhops)
 		else:
-			print "Modifying", lsp['name'], nysfHop
+			#print "Modifying", lsp['name'], nysfHop
 			modifyLSP(lsp['name'], nysfHop)
 	#set current value of shortest path = backup Path
 	#shortestPath = path
-	print "Current Shortest Routers Path: ", path['nhop']
+	#print "Current Shortest Routers Path: ", path['nhop']
 	
 
 def failoverBackupLSP(failEvent):
