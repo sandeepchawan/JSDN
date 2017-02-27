@@ -30,6 +30,20 @@ print "\n*** Backup Paths for High and Low Priority LSP ***"
 pprint.pprint(backupPath1)
 pprint.pprint(backupPath2)
 
+def checkSinglePathOnline(path):
+        isUp = False
+        isUp = isAllLinkUp(path['nhop'])
+        return isUp
+
+def checkBackupOnline(paths):
+        isUp = False
+        for path in paths:
+                isUp = isAllLinkUp(path['nhop'])
+                if isUp:
+                        break
+        return path
+
+
 def eventHandler(event):
         print "\n****** New Event received, handling new event ******"
 	print event
@@ -81,7 +95,7 @@ def failoverBackupLSP(failEvent):
 		
 		#Deal with high priority path first		
 		if highPriorLSP:
-			backupIsUp = checkingSinglePathOnline(backupPath1)
+			backupIsUp = checkSinglePathOnline(backupPath1)
 			#If main backup not detected, going down the backup list
 			if backupIsUp == False:
 				backupPath1 = checkBackupOnline(backupPaths)
@@ -114,21 +128,16 @@ def failoverBackupLSP(failEvent):
 	else:
 		print "~~ Link Failure did not affect any LSP, no need to worry ~~ "
 	
-def checkSinglePathOnline(path):
-	isUp = False
-	isUp = isAllLinkUp(path['nhop'])
-	return isUp
-	
-def checkBackupOnline(paths):
-	isUp = False
-	for path in paths:
-		isUp = isAllLinkUp(path['nhop'])
-		if isUp:
-			break
-	return path
-	
+blockR = ''
 	
 def recalculateShortestPath():
+	global blockR
+	excR = []
+
+	if blockR:
+		excR.append(blockR)
+		return ospf.getShortestPath(excR)
+
 	print "Recalculate Backup Shortest Path"
 	return ospf.getShortestPath()
 
@@ -175,4 +184,9 @@ def recoverEventHandler(healEvent):
 def refreshPaths():
 	recoverEventHandler({})
 
+def setBlockRouter(r_id):
+	global blockR
+	blockR = r_id
+	
+	recoverEventHandler({})
 #eventHandler(test_event)	

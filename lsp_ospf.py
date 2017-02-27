@@ -290,7 +290,7 @@ def getShortestPath(noRouter = []):
 		curShortestPath = shortestPath2
 		shortestPath2 = temp
 	for pathH in backupPaths:
-		if pathH['cost'] <= shortestPath2['cost'] and pathH['nhop'] == shortestPath2['nhop']:
+		if pathH['cost'] <= shortestPath2['cost']:
 			backupPaths.remove(pathH)
 
 	sortBackupPaths()
