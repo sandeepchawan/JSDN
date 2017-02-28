@@ -5,6 +5,7 @@ import topology
 import lsp_ospf as ospf 
 import pprint
 from lsp_modify_ero import *
+import redis
 
 #test_event = {"status": "failed", "router_id": "10.210.10.118", "timestamp": "Thu:16:57:51", "interface_address": "10.210.17.1", "interface_name": "ge-1/0/2", "router_name": "los angeles"}
 
@@ -225,6 +226,34 @@ def setBlockRouter(r_id):
 	print "All LSP Enabled with new Hops"
 
 	#recoverEventHandler({})
+
+def listenToRedis():
+	port = 12908
+	hostname = "redis-12908.c10.us-east-1-4.ec2.cloud.redislabs.com"
+	rList = {
+    			'Chicago': '10.210.10.124',
+    			'SF': '10.210.10.100',
+    			'Dallas': '10.210.10.106',
+    			'Miami': '10.210.10.112',
+    			'NY': '10.210.10.118',
+    			'LA': '10.210.10.113',
+    			'Houston': '10.210.10.114',
+    			'Tampa': '10.210.10.115'
+		} 
+	r = redis.StrictRedis(host=hostname, port=port, db=0)
+	if r:
+		blockR = r.get('router')
+		if blockR == 'none':
+			blockR = ''
+			setBlockRouter('')
+			return
+		#blockR = r.get('router')
+		if blockR == 'NY' or blockR == 'SF':
+			return
+
+		#print blockR	
+		#print rList[blockR] # json-formatted string
+		setBlockRouter(rList[blockR])
 
 refreshPaths()
 #refreshPaths()
